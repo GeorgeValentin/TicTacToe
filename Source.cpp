@@ -1,11 +1,5 @@
 #define _CRT_SECURE_NO_WARNINGS
 
-/*
-TO IMPLEMENT:
--> Validate input so that a player cannot move in an occupied table cell
--> Implement game end - win, draw, lose
-*/
-
 // Macros variables
 #define NUMBER_OF_LINES 3
 #define NUMBER_OF_COLUMNS 3
@@ -20,79 +14,28 @@ TO IMPLEMENT:
 // Global variables
 char numChars[] = { '0', '1', '2' };
 
-/* Function prototypes */ 
-
-// Allocate memory for the game table (2x2 char matrix)
+/* Function Prorotypes */
 void allocateMemoryForTable(char**&);
 
-// Build the matrix 
-void createTable(char**);
-
-// Create and display the user menu
-void drawMenu();
-
-// Delete the memory occupied by the matrix
 void deAllocateMemoryForTable(char**&);
 
-// Ask user to pick a menu choice
+void createTable(char**);
+
+void drawMenu();
+
 int inputMenuChoice();
 
-// Dysplay the game table (the 2D matrix)
 void displayTable(char**, int&, int&, char);
 
-// Start the Game
-void startGame(char**&, int&, int&, int&);
+void startGame(char**&, int&, int&, int&, int*);
 
-// Display the players' layout
 void displayPlayersLayout(int&, char&, int&, int&);
-
-// Get the coordinates of the player's movement
-void makeAMove(int&, int&);
 
 void validateCoordInputMove(char&, bool&, int&);
 
-// Main Program
-int main(void) {
+void makeAMove(int&, int&);
 
-	// Variables defined
-	char** table = NULL;
-	int lineCoord = 0;
-	int columnCoord = 0;
-	int menuChoice = 0;
-	char move = ' ';
-
-	/*
-		-> 1 - it's player1's turn
-		-> 2 -> it's player2's turn
-		-> 0 -> the game ended
-	*/
-	int gameStatus = 1;
-
-
-	allocateMemoryForTable(table);
-	createTable(table);
-	drawMenu();
-
-	do {
-		menuChoice = inputMenuChoice();
-
-		if (menuChoice == 2) {
-			exit(0);
-		}
-		else if (menuChoice == 1) {
-			displayTable(table, lineCoord, columnCoord, move);
-			break;
-		}
-	} while (menuChoice != 1 && menuChoice != 2);
-
-	while (gameStatus != 0) {
-		startGame(table, lineCoord, columnCoord, gameStatus);
-	}
-
-	deAllocateMemoryForTable(table);
-	return 0;
-}
-
+// Allocate memory for the game table (2x2 char matrix)
 void allocateMemoryForTable(char**& table) {
 	table = (char**)malloc(NUMBER_OF_LINES * sizeof(int*));
 	for (int i = 0; i < NUMBER_OF_LINES; i++) {
@@ -100,6 +43,7 @@ void allocateMemoryForTable(char**& table) {
 	}
 }
 
+// Delete the memory occupied by the matrix
 void deAllocateMemoryForTable(char**& table) {
 	for (int i = 0; i < NUMBER_OF_LINES; i++) {
 		free(table[i]);
@@ -107,6 +51,7 @@ void deAllocateMemoryForTable(char**& table) {
 	free(table);
 }
 
+// Build the matrix 
 void createTable(char** table) {
 	for (int i = 0; i < NUMBER_OF_LINES; i++) {
 		for (int j = 0; j < NUMBER_OF_COLUMNS; j++) {
@@ -115,12 +60,14 @@ void createTable(char** table) {
 	}
 }
 
+// Create and display the user menu
 void drawMenu() {
 	printf("1) New Game(X)\n");
 	printf("2) Exit Game\n");
 	printf(LINE_SEPARATOR);
 }
 
+// Ask user to pick a menu choice
 int inputMenuChoice() {
 	int menuChoice = 0;
 	scanf_s("%d", &menuChoice);
@@ -128,6 +75,7 @@ int inputMenuChoice() {
 	return menuChoice;
 }
 
+// Dysplay the game table (the 2D matrix)
 void displayTable(char** table, int& line, int& column, char move) {
 	printf(LINE_SEPARATOR);
 	for (int i = 0; i < NUMBER_OF_LINES; i++) {
@@ -149,28 +97,56 @@ void displayTable(char** table, int& line, int& column, char move) {
 	printf(LINE_SEPARATOR);
 }
 
-void startGame(char**& table, int& lineCoord, int& columnCoord, int& gameStatus) {
-	char move;
-	displayPlayersLayout(gameStatus, move, lineCoord, columnCoord);
-
+// Count the elements from a line that are the same as the current move
+int getLineCounter(char**& table, int lineCoord, char move) {
+	int lineMoveCounter = 0;
+	
 	for (int i = 0; i < NUMBER_OF_LINES; i++) {
-		for (int j = 0; j < NUMBER_OF_COLUMNS; j++) {
-
-			// ****** fix this bug
-			//if (move == table[i][j]) {
-			//	printf("Cell occupied. Please make another move!");
-			//	makeAMove(lineCoord, columnCoord);
-			//}
-
-			//if (table[i][j] == ) {
-			//	gameStatus = 0;
-			//}
+		if (table[lineCoord][i] == move) {
+			lineMoveCounter++;
 		}
 	}
 
-	displayTable(table, lineCoord, columnCoord, move);
+	return lineMoveCounter;
 }
 
+// Count the elements from a column that are the same as the current move
+int getColumnCounter(char**& table, int colCoord, char move) {
+	int colMoveCounter = 0;
+
+	for (int i = 0; i < NUMBER_OF_LINES; i++) {
+		if (table[i][colCoord] == move) {
+			colMoveCounter++;
+		}
+	}
+
+	return colMoveCounter;
+}
+
+// Start the Game
+void startGame(char**& table, int& lineCoord, int& columnCoord, int& gameStatus, int* winningStatus) {
+	char move;
+
+	displayPlayersLayout(gameStatus, move, lineCoord, columnCoord);
+	
+	displayTable(table, lineCoord, columnCoord, move);
+
+	// count how many cells on a line contain X
+	int lineMoveCounter = getLineCounter(table, lineCoord, move);
+
+	// count how many cells on a column contain X
+	int colMoveCounter = getColumnCounter(table, columnCoord, move);
+
+	if ((lineMoveCounter == 3 || colMoveCounter == 3) && move == 'X') {
+		*winningStatus = 1;
+	}
+
+	if ((lineMoveCounter == 3 || colMoveCounter == 3) && move == '0') {
+		*winningStatus = 2;
+	}
+}
+
+// Display the players' layout
 void displayPlayersLayout(int& gameStatus, char& move, int& line, int& column) {
 
 	if (gameStatus == 1) {
@@ -187,6 +163,7 @@ void displayPlayersLayout(int& gameStatus, char& move, int& line, int& column) {
 	}
 }
 
+// Validate the player move's coordinates
 void validateCoordInputMove(char &coordUserInputMove, bool &isCoordInputADigit, int &coord) {
 	for (int i = 0; i < COUNT_ONE_DIGIT_NUMBERS; i++) {		
 		if (coordUserInputMove != numChars[i]) {
@@ -200,6 +177,7 @@ void validateCoordInputMove(char &coordUserInputMove, bool &isCoordInputADigit, 
 	}
 }
 
+// Get the coordinates of the player's movement
 void makeAMove(int& line, int& column) {
 
 	bool isLineInputADigit = true;
@@ -243,3 +221,60 @@ void makeAMove(int& line, int& column) {
 	} while (column != 0 && column != 1 && column != 2 && isColumnInputADigit == false);
 }
 
+// Main Program
+int main(void) {
+
+	// Variables defined
+	char** table = NULL;
+	int lineCoord = 0;
+	int columnCoord = 0;
+	int menuChoice = 0;
+	char move = ' ';
+
+	/*
+		"1" -> X has won
+		"2" -> 0 has won
+		"3" -> it's a draw
+	*/
+	int winningStatus = 0;
+
+	/*
+		-> 1 - it's player1's turn
+		-> 2 -> it's player2's turn
+		-> 0 -> the game ended
+	*/
+	int gameStatus = 1;
+
+
+	allocateMemoryForTable(table);
+	createTable(table);
+	drawMenu();
+
+	do {
+		menuChoice = inputMenuChoice();
+
+		if (menuChoice == 2) {
+			exit(0);
+		}
+		else if (menuChoice == 1) {
+			displayTable(table, lineCoord, columnCoord, move);
+			break;
+		}
+	} while (menuChoice != 1 && menuChoice != 2);
+
+	while (gameStatus != 0) {
+		startGame(table, lineCoord, columnCoord, gameStatus, &winningStatus);
+
+		if (winningStatus == 1) {
+			printf("\nX has won!\n");
+			break;
+		}
+		else if (winningStatus == 2) {
+			printf("\n0 has won!\n");
+			break;
+		}
+	}
+
+	deAllocateMemoryForTable(table);
+	return 0;
+}
