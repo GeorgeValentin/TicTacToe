@@ -35,6 +35,14 @@ void validateCoordInputMove(char&, bool&, int&);
 
 void makeAMove(int&, int&);
 
+int getLineCounter(char**&, int, char);
+
+int getColumnCounter(char**&, int, char);
+
+int determineWinningStatus(int, int, char);
+
+void checkGameTableCells(char**, int&, int&, int*);
+
 // Allocate memory for the game table (2x2 char matrix)
 void allocateMemoryForTable(char**& table) {
 	table = (char**)malloc(NUMBER_OF_LINES * sizeof(int*));
@@ -75,13 +83,13 @@ int inputMenuChoice() {
 	return menuChoice;
 }
 
-// Dysplay the game table (the 2D matrix)
+// Display the game table (the 2D matrix)
 void displayTable(char** table, int& line, int& column, char move) {
 	printf(LINE_SEPARATOR);
 	for (int i = 0; i < NUMBER_OF_LINES; i++) {
 		printf(" - - -\n");
 		for (int j = 0; j < NUMBER_OF_COLUMNS; j++) {
-			if (i == line && j == column) {
+			if (i == line && j == column) {		
 				table[line][column] = move;
 				printf("|");
 				printf("%c", table[line][column]);
@@ -123,27 +131,65 @@ int getColumnCounter(char**& table, int colCoord, char move) {
 	return colMoveCounter;
 }
 
+// Get the winner based on the values on the lines and columns
+int determineWinningStatus(int lineMoveCounter, int colMoveCounter, char move) {
+	int winningStatus = 0;
+
+	if ((lineMoveCounter == 3 || colMoveCounter == 3) && move == 'X') {
+		winningStatus = 1;
+	}
+
+	if ((lineMoveCounter == 3 || colMoveCounter == 3) && move == '0') {
+		winningStatus = 2;
+	}
+
+	return winningStatus;
+}
+
+// Check if the cell of the current move is occupied
+void checkGameTableCells(char** table, int& line, int& column, int* cellStatus)
+{
+	if (table[line][column] != ' ') {
+		*cellStatus = 1;
+	}
+	else {
+		*cellStatus = 0;
+	}
+}
+
 // Start the Game
 void startGame(char**& table, int& lineCoord, int& columnCoord, int& gameStatus, int* winningStatus) {
 	char move;
 
+	// = 0 -> empty cell
+	// = 1 -> occupied cell
+	int cellStatus = 0;
+
+	// get player move
 	displayPlayersLayout(gameStatus, move, lineCoord, columnCoord);
+
+	do
+	{
+		checkGameTableCells(table, lineCoord, columnCoord, &cellStatus);
+
+		if (cellStatus == 0) {
+			displayTable(table, lineCoord, columnCoord, move);
+
+			// count how many cells on a line contain X
+			int lineMoveCounter = getLineCounter(table, lineCoord, move);
+
+			// count how many cells on a column contain X
+			int colMoveCounter = getColumnCounter(table, columnCoord, move);
+
+			*winningStatus = determineWinningStatus(lineMoveCounter, colMoveCounter, move);
+		}
+		else {
+			printf("\nEnter another cell!\n");
+			makeAMove(lineCoord, columnCoord);
+		}
+
+	} while (cellStatus != 0);
 	
-	displayTable(table, lineCoord, columnCoord, move);
-
-	// count how many cells on a line contain X
-	int lineMoveCounter = getLineCounter(table, lineCoord, move);
-
-	// count how many cells on a column contain X
-	int colMoveCounter = getColumnCounter(table, columnCoord, move);
-
-	if ((lineMoveCounter == 3 || colMoveCounter == 3) && move == 'X') {
-		*winningStatus = 1;
-	}
-
-	if ((lineMoveCounter == 3 || colMoveCounter == 3) && move == '0') {
-		*winningStatus = 2;
-	}
 }
 
 // Display the players' layout
@@ -177,6 +223,30 @@ void validateCoordInputMove(char &coordUserInputMove, bool &isCoordInputADigit, 
 	}
 }
 
+char inputPlayerLineMove(char& lineUserInput) {
+	if (lineUserInput == ' ') {
+		printf("\nEnter the line of your move: ");
+	}
+	else {
+		printf("Please enter another value for the line: ");
+	}
+	scanf(" %c", &lineUserInput);
+
+	return lineUserInput;
+}
+
+char inputPlayerColumnMove(char& columnUserInput) {
+	if (columnUserInput == ' ') {
+		printf("Enter the column of your move: ");
+	}
+	else {
+		printf("Please enter another value for the column: ");
+	}
+	scanf(" %c", &columnUserInput);
+
+	return columnUserInput;
+}
+
 // Get the coordinates of the player's movement
 void makeAMove(int& line, int& column) {
 
@@ -186,8 +256,7 @@ void makeAMove(int& line, int& column) {
 	char lineUserInput = ' ';
 	char columnUserInput = ' ';
 
-	printf("\nEnter the line of your move: ");
-	scanf(" %c", &lineUserInput);
+	lineUserInput = inputPlayerLineMove(lineUserInput);
 
 	do {
 		validateCoordInputMove(lineUserInput, isLineInputADigit, line);
@@ -197,15 +266,13 @@ void makeAMove(int& line, int& column) {
 			line = lineUserInput - '0';
 		}
 		else {
-			printf("Please enter another value: ");
-			scanf(" %c", &lineUserInput);
+			lineUserInput = inputPlayerLineMove(lineUserInput);
 		}
 
 
 	} while (line != 0 && line != 1 && line != 2 && isLineInputADigit == false);
 
-	printf("Enter the column of your move: ");
-	scanf(" %c", &columnUserInput);
+	columnUserInput = inputPlayerColumnMove(columnUserInput);
 
 	do {
 		validateCoordInputMove(columnUserInput, isColumnInputADigit, column);
@@ -215,8 +282,7 @@ void makeAMove(int& line, int& column) {
 			column = columnUserInput - '0';
 		}
 		else {
-			printf("Please enter another value: ");
-			scanf(" %c", &columnUserInput);
+			columnUserInput = inputPlayerColumnMove(columnUserInput);
 		}
 	} while (column != 0 && column != 1 && column != 2 && isColumnInputADigit == false);
 }
