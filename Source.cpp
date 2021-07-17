@@ -4,6 +4,7 @@
 #define NUMBER_OF_LINES 3
 #define NUMBER_OF_COLUMNS 3
 #define COUNT_ONE_DIGIT_NUMBERS 3
+#define COUNT_MENU_CHOICES 2
 #define LINE_SEPARATOR "\n"
 
 // Libraries used
@@ -14,6 +15,7 @@
 
 // Global variables
 char numChars[] = { '0', '1', '2' };
+char menuChoices[] = { '1', '2' };
 
 /* Function Prorotypes */
 void allocateMemoryForTable(char**&);
@@ -24,7 +26,7 @@ void createTable(char**);
 
 void drawMenu();
 
-int inputMenuChoice();
+char inputMenuChoice();
 
 void displayTable(char**, int&, int&, char);
 
@@ -54,7 +56,7 @@ char inputPlayerColumnMove(char);
 
 void settingMenuOption(int, char**, int, int, char);
 
-void startMenu(int&, char**&, int&, int&, char&);
+void startMenu(int&, char**&, int&, int&, char&, bool);
 
 // Allocate memory for the game table (2x2 char matrix)
 void allocateMemoryForTable(char**& table) {
@@ -89,9 +91,9 @@ void drawMenu() {
 }
 
 // Ask user to pick a menu choice
-int inputMenuChoice() {
-	int menuChoice = 0;
-	scanf_s("%d", &menuChoice);
+char inputMenuChoice() {
+	char menuChoice = ' ';
+	scanf_s(" %c", &menuChoice);
 
 	return menuChoice;
 }
@@ -246,7 +248,7 @@ void startGame(char**& table, int& lineCoord, int& columnCoord, int& gameStatus,
 		else 
 		{
 			// ask the user to input a different one
-			printf("\n Enter another cell!\n");
+			printf("\n\n Enter another cell!\n\n");
 			makeAMove(lineCoord, columnCoord);
 		}
 
@@ -260,14 +262,14 @@ void displayPlayersLayout(int& gameStatus, char& move, int& line, int& column) {
 	switch (gameStatus) {
 		case 1:
 			move = 'X';
-			printf("\n %c make a move! \n", move);
+			printf("\n %c make a move! \n\n", move);
 			makeAMove(line, column);
 			gameStatus == 1 ? gameStatus = 2 : gameStatus = 0;
 			break;
 
 		case 2:
 			move = '0';
-			printf("\n %c make a move! \n", move);
+			printf("\n %c make a move! \n\n", move);
 			makeAMove(line, column);
 			gameStatus == 2 ? gameStatus = 1 : gameStatus = 0;
 		break;
@@ -379,16 +381,41 @@ void settingMenuOption(int menuChoice, char** table, int lineCoord, int columnCo
 	}
 }
 
-// Start the menu 
-void startMenu(int& menuChoice, char**& table, int& lineCoord, int& columnCoord, char& move) {
-	menuChoice = inputMenuChoice();
-	do {
-		if (menuChoice != 1 && menuChoice != 2) {
-			printf("\nPlease choose another option!\n");
-			menuChoice = inputMenuChoice();
+// Validate the menu choice so that only choices from the menuChoices array can be taken
+void validateMenuChoice(char& choice, bool& isMenuChoiceAValidDigit) {
+
+	for (int i = 0; i < COUNT_MENU_CHOICES; i++) {
+		if (choice != menuChoices[i]) {
+			isMenuChoiceAValidDigit = false;
 		}
-		settingMenuOption(menuChoice, table, lineCoord, columnCoord, move);
-	} while (menuChoice != 1 && menuChoice != 2);
+		else
+		{
+			isMenuChoiceAValidDigit = true;
+			break;
+		}
+	}
+}
+
+// Start the menu 
+void startMenu(int& menuChoice, char**& table, int& lineCoord, int& columnCoord, char& move, bool isMenuChoiceAValidDigit) {
+	char choice = ' ';
+	choice = inputMenuChoice();
+
+	do {
+		validateMenuChoice(choice, isMenuChoiceAValidDigit);
+
+		if (isMenuChoiceAValidDigit) {
+			menuChoice = choice - '0';
+		}
+		else {
+			printf("\nPlease choose another option!\n");
+			choice = inputMenuChoice();
+		}
+
+	} while (menuChoice != 1 && menuChoice != 2 && isMenuChoiceAValidDigit == false);
+
+	settingMenuOption(menuChoice, table, lineCoord, columnCoord, move);
+
 }
 
 // Main Program
@@ -399,6 +426,7 @@ int main(void) {
 	int lineCoord = 0;
 	int columnCoord = 0;
 	int menuChoice = 0;
+	bool isMenuChoiceAValidDigit = true;
 	char move = ' ';
 	int counterOccupiedCells = 0;
 
@@ -420,7 +448,7 @@ int main(void) {
 	allocateMemoryForTable(table);
 	createTable(table);
 	drawMenu();
-	startMenu(menuChoice, table, lineCoord, columnCoord, move);
+	startMenu(menuChoice, table, lineCoord, columnCoord, move, isMenuChoiceAValidDigit);
 	
 	while (gameStatus != 0) {
 		startGame(table, lineCoord, columnCoord, gameStatus, &winningStatus);
