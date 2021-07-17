@@ -10,6 +10,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
+#include <string.h>
 
 // Global variables
 char numChars[] = { '0', '1', '2' };
@@ -50,6 +51,10 @@ int getSecDiagCounter(char**, int, int, char);
 char inputPlayerLineMove(char);
 
 char inputPlayerColumnMove(char);
+
+void settingMenuOption(int, char**, int, int, char);
+
+void startMenu(int&, char**&, int&, int&, char&);
 
 // Allocate memory for the game table (2x2 char matrix)
 void allocateMemoryForTable(char**& table) {
@@ -143,12 +148,19 @@ int getColumnCounter(char** table, int colCoord, char move) {
 int determineWinningStatus(int lineMoveCounter, int colMoveCounter, int mainDiagCounter, int secDiagonalCounter, char move) {
 	int winningStatus = 0;
 
-	if ((lineMoveCounter == 3 || colMoveCounter == 3 || mainDiagCounter == 3 || secDiagonalCounter == 3) && move == 'X') {
-		winningStatus = 1;
+	if (lineMoveCounter == 3 || colMoveCounter == 3 || mainDiagCounter == 3 || secDiagonalCounter == 3) {
+		if (move == 'X') {
+			// X wins
+			winningStatus = 1;
+		}
+		else {
+			// 0 wins
+			winningStatus = 2;
+		}
 	}
-
-	if ((lineMoveCounter == 3 || colMoveCounter == 3 || mainDiagCounter == 3 || secDiagonalCounter == 3) && move == '0') {
-		winningStatus = 2;
+	else {
+		// it is a draw
+		winningStatus = 0;
 	}
 
 	return winningStatus;
@@ -165,6 +177,7 @@ void checkGameTableCells(char** table, int& line, int& column, int* cellStatus)
 	}
 }
 
+// Count the elements that contain the current move from the main diagonal of the game table
 int getMainDiagCounter(char** table, int lineCoord, int columneCoord, char move)
 {
 	int mainDiagCounter = 0;
@@ -180,6 +193,7 @@ int getMainDiagCounter(char** table, int lineCoord, int columneCoord, char move)
 	return mainDiagCounter;
 }
 
+// Count the elements that contain the current move from the secondary diagonal of the game table
 int getSecDiagCounter(char** table, int lineCoord, int columnCoord, char move) {
 	int secDiagCounter = 0;
 	
@@ -199,9 +213,6 @@ int getSecDiagCounter(char** table, int lineCoord, int columnCoord, char move) {
 // Start the Game
 void startGame(char**& table, int& lineCoord, int& columnCoord, int& gameStatus, int* winningStatus) {
 	char move;
-
-	// = 0 -> empty cell
-	// = 1 -> occupied cell
 	int cellStatus = 0;
 
 	// get player move
@@ -209,8 +220,10 @@ void startGame(char**& table, int& lineCoord, int& columnCoord, int& gameStatus,
 
 	do
 	{
+		// get the status of the current cell
 		checkGameTableCells(table, lineCoord, columnCoord, &cellStatus);
 
+		// if the current cell is empty
 		if (cellStatus == 0) {
 			displayTable(table, lineCoord, columnCoord, move);
 
@@ -226,31 +239,41 @@ void startGame(char**& table, int& lineCoord, int& columnCoord, int& gameStatus,
 			// count how many cells on the secondary diagonal contain the current move
 			int secondaryDiagCounter = getSecDiagCounter(table, lineCoord, columnCoord, move);
 
+			// get the winningStatus
 			*winningStatus = determineWinningStatus(lineMoveCounter, colMoveCounter, mainDiagCounter, secondaryDiagCounter, move);
 		}
-		else {
-			printf("\nEnter another cell!\n");
+		// if the current cell is not empty
+		else 
+		{
+			// ask the user to input a different one
+			printf("\n Enter another cell!\n");
 			makeAMove(lineCoord, columnCoord);
 		}
 
-	} while (cellStatus != 0);
+	} while (cellStatus != 0); // run the loop until the user enters a valid cell
 	
 }
 
 // Display the players' layout
 void displayPlayersLayout(int& gameStatus, char& move, int& line, int& column) {
 
-	if (gameStatus == 1) {
-		move = 'X';
-		printf("\n X Make a move!\n");
-		makeAMove(line, column);
-		gameStatus == 1 ? gameStatus = 2 : gameStatus = 0;
-	}
-	else if (gameStatus == 2) {
-		move = '0';
-		printf("\n 0 Make a move!\n");
-		makeAMove(line, column);
-		gameStatus == 2 ? gameStatus = 1 : gameStatus = 0;
+	switch (gameStatus) {
+		case 1:
+			move = 'X';
+			printf("\n %c make a move! \n", move);
+			makeAMove(line, column);
+			gameStatus == 1 ? gameStatus = 2 : gameStatus = 0;
+			break;
+
+		case 2:
+			move = '0';
+			printf("\n %c make a move! \n", move);
+			makeAMove(line, column);
+			gameStatus == 2 ? gameStatus = 1 : gameStatus = 0;
+		break;
+
+		default:
+			break;
 	}
 }
 
@@ -268,24 +291,33 @@ void validateCoordInputMove(char &coordUserInputMove, bool &isCoordInputADigit, 
 	}
 }
 
+// Input the line coordinate of the move
 char inputPlayerLineMove(char lineUserInput) {
-	if (lineUserInput == ' ') {
-		printf("\nEnter the line of your move: ");
-	}
-	else {
-		printf("Please enter another value for the line: ");
+	switch (lineUserInput) {
+	case ' ':
+		printf(" Enter the line of your move: ");
+		break;
+	
+	default: 
+		printf(" Please enter another value for the line: ");
+		break;
 	}
 	scanf(" %c", &lineUserInput);
 
 	return lineUserInput;
 }
 
+// Input the column coordinate of the move
 char inputPlayerColumnMove(char columnUserInput) {
-	if (columnUserInput == ' ') {
-		printf("Enter the column of your move: ");
-	}
-	else {
-		printf("Please enter another value for the column: ");
+	
+	switch (columnUserInput) {
+	case ' ':
+		printf(" Enter the column of your move: ");
+		break;
+
+	default:
+		printf(" Please enter another value for the column: ");
+		break;
 	}
 	scanf(" %c", &columnUserInput);
 
@@ -333,6 +365,32 @@ void makeAMove(int& line, int& column) {
 	} while (column != 0 && column != 1 && column != 2 && isColumnInputADigit == false);
 }
 
+// Define the functionality for when a user chooses a certain menu option
+void settingMenuOption(int menuChoice, char** table, int lineCoord, int columnCoord, char move) {
+	
+	switch (menuChoice) {
+	case 1: 
+		displayTable(table, lineCoord, columnCoord, move);
+		break;
+
+	case 2:
+		exit(0);
+		break;
+	}
+}
+
+// Start the menu 
+void startMenu(int& menuChoice, char**& table, int& lineCoord, int& columnCoord, char& move) {
+	menuChoice = inputMenuChoice();
+	do {
+		if (menuChoice != 1 && menuChoice != 2) {
+			printf("\nPlease choose another option!\n");
+			menuChoice = inputMenuChoice();
+		}
+		settingMenuOption(menuChoice, table, lineCoord, columnCoord, move);
+	} while (menuChoice != 1 && menuChoice != 2);
+}
+
 // Main Program
 int main(void) {
 
@@ -362,19 +420,8 @@ int main(void) {
 	allocateMemoryForTable(table);
 	createTable(table);
 	drawMenu();
-
-	do {
-		menuChoice = inputMenuChoice();
-
-		if (menuChoice == 2) {
-			exit(0);
-		}
-		else if (menuChoice == 1) {
-			displayTable(table, lineCoord, columnCoord, move);
-			break;
-		}
-	} while (menuChoice != 1 && menuChoice != 2);
-
+	startMenu(menuChoice, table, lineCoord, columnCoord, move);
+	
 	while (gameStatus != 0) {
 		startGame(table, lineCoord, columnCoord, gameStatus, &winningStatus);
 
@@ -382,12 +429,14 @@ int main(void) {
 
 		if (winningStatus == 1) {
 			printf("\nX has won!\n");
+			gameStatus = 0;
 			break;
 		}
 		else if (winningStatus == 2) {
 			printf("\n0 has won!\n");
+			gameStatus = 0;
 			break;
-		}
+		}	
 
 		if (counterOccupiedCells == 9) {
 			break;
@@ -396,6 +445,7 @@ int main(void) {
 
 	if (winningStatus == 0) {
 		printf("\nIt's a draw!\n");
+		gameStatus = 0;
 	}
 
 	deAllocateMemoryForTable(table);
