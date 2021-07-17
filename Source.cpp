@@ -35,13 +35,21 @@ void validateCoordInputMove(char&, bool&, int&);
 
 void makeAMove(int&, int&);
 
-int getLineCounter(char**&, int, char);
+int getLineCounter(char**, int, char);
 
-int getColumnCounter(char**&, int, char);
+int getColumnCounter(char**, int, char);
 
-int determineWinningStatus(int, int, char);
+int determineWinningStatus(int, int, int, int, char);
 
 void checkGameTableCells(char**, int&, int&, int*);
+
+int getMainDiagCounter(char**, int, int, char);
+
+int getSecDiagCounter(char**, int, int, char);
+
+char inputPlayerLineMove(char);
+
+char inputPlayerColumnMove(char);
 
 // Allocate memory for the game table (2x2 char matrix)
 void allocateMemoryForTable(char**& table) {
@@ -106,7 +114,7 @@ void displayTable(char** table, int& line, int& column, char move) {
 }
 
 // Count the elements from a line that are the same as the current move
-int getLineCounter(char**& table, int lineCoord, char move) {
+int getLineCounter(char** table, int lineCoord, char move) {
 	int lineMoveCounter = 0;
 	
 	for (int i = 0; i < NUMBER_OF_LINES; i++) {
@@ -119,7 +127,7 @@ int getLineCounter(char**& table, int lineCoord, char move) {
 }
 
 // Count the elements from a column that are the same as the current move
-int getColumnCounter(char**& table, int colCoord, char move) {
+int getColumnCounter(char** table, int colCoord, char move) {
 	int colMoveCounter = 0;
 
 	for (int i = 0; i < NUMBER_OF_LINES; i++) {
@@ -132,14 +140,14 @@ int getColumnCounter(char**& table, int colCoord, char move) {
 }
 
 // Get the winner based on the values on the lines and columns
-int determineWinningStatus(int lineMoveCounter, int colMoveCounter, char move) {
+int determineWinningStatus(int lineMoveCounter, int colMoveCounter, int mainDiagCounter, int secDiagonalCounter, char move) {
 	int winningStatus = 0;
 
-	if ((lineMoveCounter == 3 || colMoveCounter == 3) && move == 'X') {
+	if ((lineMoveCounter == 3 || colMoveCounter == 3 || mainDiagCounter == 3 || secDiagonalCounter == 3) && move == 'X') {
 		winningStatus = 1;
 	}
 
-	if ((lineMoveCounter == 3 || colMoveCounter == 3) && move == '0') {
+	if ((lineMoveCounter == 3 || colMoveCounter == 3 || mainDiagCounter == 3 || secDiagonalCounter == 3) && move == '0') {
 		winningStatus = 2;
 	}
 
@@ -155,6 +163,37 @@ void checkGameTableCells(char** table, int& line, int& column, int* cellStatus)
 	else {
 		*cellStatus = 0;
 	}
+}
+
+int getMainDiagCounter(char** table, int lineCoord, int columneCoord, char move)
+{
+	int mainDiagCounter = 0;
+
+	for (int i = 0; i < NUMBER_OF_LINES; i++) {
+		for (int j = 0; j < NUMBER_OF_COLUMNS; j++) {
+			if (i == j && table[i][j] == move) {
+				mainDiagCounter++;
+			}
+		}
+	}
+
+	return mainDiagCounter;
+}
+
+int getSecDiagCounter(char** table, int lineCoord, int columnCoord, char move) {
+	int secDiagCounter = 0;
+	
+	for (int i = 0; i < NUMBER_OF_LINES; i++) {
+		for (int j = 0; j < NUMBER_OF_COLUMNS; j++) {
+
+			// only works when NUMBER_OF_LINES == NUMBER_OF_COLUMNS
+			if ((i + j) == (NUMBER_OF_LINES - 1) && table[i][j] == move) {
+				secDiagCounter++;
+			}
+		}
+	}
+
+	return secDiagCounter;
 }
 
 // Start the Game
@@ -175,13 +214,19 @@ void startGame(char**& table, int& lineCoord, int& columnCoord, int& gameStatus,
 		if (cellStatus == 0) {
 			displayTable(table, lineCoord, columnCoord, move);
 
-			// count how many cells on a line contain X
+			// count how many cells on a line contain the current move
 			int lineMoveCounter = getLineCounter(table, lineCoord, move);
 
-			// count how many cells on a column contain X
+			// count how many cells on a column contain the current move
 			int colMoveCounter = getColumnCounter(table, columnCoord, move);
 
-			*winningStatus = determineWinningStatus(lineMoveCounter, colMoveCounter, move);
+			// count how many cells on the main diagonal contain the current move
+			int mainDiagCounter = getMainDiagCounter(table, lineCoord, columnCoord, move);
+
+			// count how many cells on the secondary diagonal contain the current move
+			int secondaryDiagCounter = getSecDiagCounter(table, lineCoord, columnCoord, move);
+
+			*winningStatus = determineWinningStatus(lineMoveCounter, colMoveCounter, mainDiagCounter, secondaryDiagCounter, move);
 		}
 		else {
 			printf("\nEnter another cell!\n");
@@ -209,7 +254,7 @@ void displayPlayersLayout(int& gameStatus, char& move, int& line, int& column) {
 	}
 }
 
-// Validate the player move's coordinates
+// Validate the player move's coordinates to make sure the inputted value is a digit
 void validateCoordInputMove(char &coordUserInputMove, bool &isCoordInputADigit, int &coord) {
 	for (int i = 0; i < COUNT_ONE_DIGIT_NUMBERS; i++) {		
 		if (coordUserInputMove != numChars[i]) {
@@ -223,7 +268,7 @@ void validateCoordInputMove(char &coordUserInputMove, bool &isCoordInputADigit, 
 	}
 }
 
-char inputPlayerLineMove(char& lineUserInput) {
+char inputPlayerLineMove(char lineUserInput) {
 	if (lineUserInput == ' ') {
 		printf("\nEnter the line of your move: ");
 	}
@@ -235,7 +280,7 @@ char inputPlayerLineMove(char& lineUserInput) {
 	return lineUserInput;
 }
 
-char inputPlayerColumnMove(char& columnUserInput) {
+char inputPlayerColumnMove(char columnUserInput) {
 	if (columnUserInput == ' ') {
 		printf("Enter the column of your move: ");
 	}
@@ -256,6 +301,7 @@ void makeAMove(int& line, int& column) {
 	char lineUserInput = ' ';
 	char columnUserInput = ' ';
 
+	// get input for the line coordinate of the move
 	lineUserInput = inputPlayerLineMove(lineUserInput);
 
 	do {
@@ -269,9 +315,9 @@ void makeAMove(int& line, int& column) {
 			lineUserInput = inputPlayerLineMove(lineUserInput);
 		}
 
-
 	} while (line != 0 && line != 1 && line != 2 && isLineInputADigit == false);
 
+	// get input for the column coordinate of the move
 	columnUserInput = inputPlayerColumnMove(columnUserInput);
 
 	do {
@@ -296,6 +342,7 @@ int main(void) {
 	int columnCoord = 0;
 	int menuChoice = 0;
 	char move = ' ';
+	int counterOccupiedCells = 0;
 
 	/*
 		"1" -> X has won
@@ -331,6 +378,8 @@ int main(void) {
 	while (gameStatus != 0) {
 		startGame(table, lineCoord, columnCoord, gameStatus, &winningStatus);
 
+		counterOccupiedCells++;
+
 		if (winningStatus == 1) {
 			printf("\nX has won!\n");
 			break;
@@ -339,6 +388,14 @@ int main(void) {
 			printf("\n0 has won!\n");
 			break;
 		}
+
+		if (counterOccupiedCells == 9) {
+			break;
+		}
+	}
+
+	if (winningStatus == 0) {
+		printf("\nIt's a draw!\n");
 	}
 
 	deAllocateMemoryForTable(table);
