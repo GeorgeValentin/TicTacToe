@@ -17,7 +17,7 @@
 char numChars[] = { '0', '1', '2' };
 char menuChoices[] = { '1', '2' };
 
-/* Function Prorotypes */
+/* Function Prototypes */
 void allocateMemoryForTable(char**&);
 
 void deAllocateMemoryForTable(char**&);
